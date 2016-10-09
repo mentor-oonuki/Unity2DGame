@@ -6,49 +6,45 @@ public class PlayerController : MonoBehaviour
     public float moveStartDistance = 10f;
     public float moveForce = 150f;
     public float maxSpeed = 100f;
-    float targetPointX;
-    bool facingRight = true;
+    Vector2 horizontal;
 
-    void Start()
-    {
-        Vector3 screen_point = Camera.main.WorldToScreenPoint(transform.position);
-        targetPointX = screen_point.x;
-    }
 
-    void Update()
-    {
-        if (!Input.GetMouseButtonDown(0))
-            return;
-        targetPointX = Input.mousePosition.x;
-    }
-
+    // 物理演算用Update関数
     void FixedUpdate()
     {
-        // 3D座標をスクリーン座標に変換
-        Vector3 screen_point = Camera.main.WorldToScreenPoint(transform.position);
-
-        // 移動先までの距離が一定以下ならば移動処理をしません
-        if (Mathf.Abs(targetPointX - screen_point.x) <= moveStartDistance)
-            return;
-
-        // 移動先が右か左かを計算し、その方向に移動する力を加えます
-        float horizontal = Mathf.Sign(targetPointX - screen_point.x);
-        GetComponent<Rigidbody2D>().AddForce(Vector2.right * horizontal * moveForce);
-
-        // 移動速度を制限
-        if (Mathf.Abs(GetComponent<Rigidbody2D>().velocity.x) > maxSpeed)
-            GetComponent<Rigidbody2D>().velocity = new Vector2(Mathf.Sign(GetComponent<Rigidbody2D>().velocity.x) * maxSpeed, GetComponent<Rigidbody2D>().velocity.y);
-
-        // プレイヤーの向きを調整
-        if ((horizontal > 0 && !facingRight) || (horizontal < 0 && facingRight))
+        // 移動先が右か左か判定し、その方向に移動する力を加えます
+        horizontal = Vector2.zero;
+        if (Input.GetKey(KeyCode.LeftArrow))
         {
-            facingRight = !facingRight;
-            Vector3 local_scale = transform.localScale;
-            local_scale.x *= -1;
-            transform.localScale = local_scale;
+            horizontal = Vector2.left;
         }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            horizontal = Vector2.right;
+        }
+
+
+        // スプライトを移動方向に向かせます
+        if(horizontal.normalized.x > 0)
+        {
+            Vector2 scale = transform.localScale;
+            scale.x = 0.5f;
+            transform.localScale = scale;
+        }
+        if(horizontal.normalized.x < 0)
+        {
+            Vector2 scale = transform.localScale;
+            scale.x = -0.5f;
+            transform.localScale = scale;
+        }
+
+
+        // 移動する力を加えます
+        GetComponent<Rigidbody2D>().AddForce(horizontal * moveForce);
     }
 
+
+    // 敵の攻撃の当たり判定処理
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Fire")
