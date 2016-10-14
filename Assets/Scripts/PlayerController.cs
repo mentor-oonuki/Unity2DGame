@@ -7,7 +7,27 @@ public class PlayerController : MonoBehaviour
     public float moveForce = 150f;
     public float maxSpeed = 100f;
     Vector2 horizontal;
+    Rigidbody2D rb;
 
+    // 接地しているかフラグ
+    private bool isGrounded;
+    //地面のレイヤー
+    public LayerMask groundLayer;
+    //ジャンプ力
+    float jumpForce = 500;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+
+    void Update()
+    {
+        if (isGrounded && Input.GetKeyDown(KeyCode.Z))
+        {
+            Jump();
+        }
+    }
 
     // 物理演算用Update関数
     void FixedUpdate()
@@ -23,15 +43,21 @@ public class PlayerController : MonoBehaviour
             horizontal = Vector2.right;
         }
 
+        isGrounded = Physics2D.Linecast(
+            transform.position + transform.up * 1,
+            transform.position - transform.up * 0.1f,
+            groundLayer); //Linecastが判定するレイヤー
+
+
 
         // スプライトを移動方向に向かせます
-        if(horizontal.normalized.x > 0)
+        if (horizontal.normalized.x > 0)
         {
             Vector2 scale = transform.localScale;
             scale.x = 0.5f;
             transform.localScale = scale;
         }
-        if(horizontal.normalized.x < 0)
+        if (horizontal.normalized.x < 0)
         {
             Vector2 scale = transform.localScale;
             scale.x = -0.5f;
@@ -52,5 +78,13 @@ public class PlayerController : MonoBehaviour
             Animator myAnimator = GetComponent<Animator>();
             myAnimator.SetTrigger("Damage");
         }
+    }
+
+    void Jump()
+    {
+        //上方向へ力を加える
+        rb.AddForce(Vector2.up * jumpForce);
+        //地面から離れるのでfalseにする
+        isGrounded = false;
     }
 }
